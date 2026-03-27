@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Penerapan Pancasila SD Kelas 2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF595E;    /* Merah hangat */
+            --secondary: #1982C4;  /* Biru ceria */
+            --accent: #FFCA3A;     /* Kuning bintang */
+            --background: #F0F4F8; /* Abu biru lembut */
+            --text-main: #333333;
+            --white: #FFFFFF;
+            --correct: #8AC926;    /* Hijau benar */
+            --wrong: #E03616;      /* Merah salah */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Quicksand', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+            /* Latar belakang dinamis bermotif ceria */
+            background-image: radial-gradient(#FFCA3A 0.5px, transparent 0.5px), radial-gradient(#1982C4 0.5px, #F0F4F8 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+
+        .app-container {
+            background: var(--white);
+            width: 100%;
+            max-width: 480px;
+            min-height: 600px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: var(--primary);
+            color: var(--white);
+            padding: 20px;
+            text-align: center;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(255, 89, 94, 0.3);
+        }
+
+        .top-bar h1 {
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-container {
+            width: 80%;
+            height: 12px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 10px;
+            margin: 15px auto 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
+        }
+
+        .screen {
+            display: none;
+            flex: 1;
+            padding: 30px 20px;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.4s ease-out;
+            text-align: center;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Styling Gambar/Ilustrasi (Menggunakan Emoji Vektor Besar sbg Gambar) */
+        .image-card {
+            width: 160px;
+            height: 160px;
+            background: #FFF5F5;
+            border: 6px solid #FFE4E6;
+            border-radius: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 80px;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        
+        .image-card:hover {
+            transform: translateY(-5px) rotate(3deg);
+        }
+
+        h2.question {
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            color: var(--text-main);
+        }
+
+        .options {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: var(--white);
+            color: var(--text-main);
+            border: 3px solid #E2E8F0;
+            border-radius: 20px;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--secondary);
+            background: #F0F9FF;
+            transform: translateY(-2px);
+        }
+
+        .option-btn:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        .option-btn:disabled {
+            cursor: pointer;
+        }
+
+        .option-btn.correct {
+            background: #F0FDF4;
+            border-color: var(--correct);
+            color: #166534;
+        }
+
+        .option-btn.wrong {
+            background: #FEF2F2;
+            border-color: var(--wrong);
+            color: #991B1B;
+        }
+
+        /* Overlay Feedback */
+        #feedback-toast {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: var(--white);
+            padding: 20px 40px;
+            border-radius: 30px;
+            font-size: 26px;
+            font-weight: 900;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            z-index: 100;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #feedback-toast.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .feedback-icon-large {
+            font-size: 60px;
+        }
+
+        .btn-action {
+            background: var(--secondary);
+            color: var(--white);
+            border: none;
+            border-radius: 20px;
+            padding: 18px 40px;
+            font-size: 20px;
+            font-weight: 900;
+            cursor: pointer;
+            margin-top: auto;
+            align-self: center;
+            box-shadow: 0 6px 0 #115D8C;
+            transition: all 0.2s;
+            width: 80%;
+        }
+
+        .btn-action:hover {
+            background: #1C90D9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #115D8C;
+        }
+
+        .btn-action:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #115D8C;
+        }
+
+        #next-btn-container {
+            width: 100%;
+            margin-top: 25px;
+            display: none;
+        }
+
+        .score-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 60px;
+            font-weight: 900;
+            color: var(--primary);
+            margin: 20px auto;
+            border: 8px solid #FFF3B0;
+            box-shadow: 0 10px 25px rgba(255, 202, 58, 0.4);
+        }
+
+        .pancasila-logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @media (max-width: 400px) {
+            .app-container { min-height: 100vh; border-radius: 0; }
+            .top-bar { border-radius: 0 0 20px 20px; }
+            h2.question { font-size: 18px; }
+            .option-btn { font-size: 16px; padding: 14px; }
+            .image-card { width: 130px; height: 130px; font-size: 60px; border-radius: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="top-bar">
+        <h1>🦅 Kuis Pancasila 🦅</h1>
+        <div class="progress-container" id="progress-container" style="display: none;">
+            <div class="progress-fill" id="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Layar Utama / Mulai -->
+    <div id="start-screen" class="screen active">
+        <div class="pancasila-logo">🇮🇩</div>
+        <h2 style="font-size: 26px; color: var(--primary); margin-bottom: 10px;">Halo Sahabat Cerdas!</h2>
+        <p style="font-size: 18px; margin-bottom: 40px; color: #666; line-height: 1.6;">
+            Mari amati gambar-gambar dan tebak<br>penerapan sila Pancasila yang tepat.
+        </p>
+        <button class="btn-action" onclick="startQuiz()">Mulai Belajar</button>
+    </div>
+
+    <!-- Layar Kuis -->
+    <div id="quiz-screen" class="screen">
+        <!-- Area Gambar -->
+        <div class="image-card" id="q-image"></div>
+        
+        <!-- Area Pertanyaan -->
+        <h2 id="q-text" class="question"></h2>
+        
+        <!-- Pilihan Jawaban -->
+        <div class="options" id="options"></div>
+
+        <!-- Tombol Selanjutnya -->
+        <div id="next-btn-container">
+            <button class="btn-action" style="width: 100%;" onclick="nextQuestion()">Selanjutnya ➔</button>
+        </div>
+    </div>
+
+    <!-- Papan Skor -->
+    <div id="result-screen" class="screen">
+        <div id="result-emoji" style="font-size: 60px;">🏆</div>
+        <h2 style="font-size: 28px; margin-top: 10px;">Kerja Bagus!</h2>
+        <p style="font-size: 18px; color: #666; margin-top: 5px;">Ini dia nilaimu:</p>
+        
+        <div class="score-circle">
+            <span id="final-score">0</span>
+        </div>
+
+        <p id="result-message" style="font-size: 20px; font-weight: 700; margin-bottom: 30px; padding: 0 20px;"></p>
+        
+        <button class="btn-action" onclick="location.reload()">Main Lagi</button>
+    </div>
+
+    <!-- Pop up Feedback Overlay -->
+    <div id="feedback-toast">
+        <div class="feedback-icon-large" id="feedback-icon">🌟</div>
+        <div id="feedback-text">Benar!</div>
+    </div>
+</div>
+
+<script>
+    // Data Soal Lengkap dengan Gambar (Representasi grafis Emoji/Ikon Vektor)
+    const quizData = [
+        {
+            image: "🙏",
+            bgColor: "#E0F2FE", // Biru muda
+            borderColor: "#BAE6FD",
+            question: "Sebelum mulai belajar di kelas, Budi dan teman-teman selalu berdoa. Sikap Budi mengamalkan Pancasila sila ke-...",
+            options: ["Pertama (1)", "Kedua (2)", "Ketiga (3)"],
+            answer: 0
+        },
+        {
+            image: "🤝",
+            bgColor: "#FEF08A", // Kuning muda
+            borderColor: "#FDE047",
+            question: "Siti melihat Edo terjatuh saat lari pagi. Siti segera menolong Edo. Menolong teman adalah contoh pengamalan sila ke-...",
+            options: ["Pertama (1)", "Kedua (2)", "Kelima (5)"],
+            answer: 1
+        },
+        {
+            image: "🧹",
+            bgColor: "#DCFCE7", // Hijau muda
+            borderColor: "#BBF7D0",
+            question: "Hari Jumat, murid kelas 2 bergotong royong membersihkan lingkungan sekolah. Kegiatan ini sesuai dengan sila ke-...",
+            options: ["Ketiga (3)", "Keempat (4)", "Kelima (5)"],
+            answer: 0
+        },
+        {
+            image: "🙋‍♂️",
+            bgColor: "#FFEDD5", // Orange muda
+            borderColor: "#FED7AA",
+            question: "Kelas 2 sedang bermusyawarah untuk memilih ketua kelas. Bermusyawarah adalah pengamalan sila yang berlambang...",
+            options: ["Bintang", "Kepala Banteng", "Padi dan Kapas"],
+            answer: 1 // Kepala Banteng (Sila 4)
+        },
+        {
+            image: "🪙",
+            bgColor: "#FCE7F3", // Pink muda
+            borderColor: "#FBCFE8",
+            question: "Andi selalu menyisihkan uang sakunya untuk ditabung. Rajin menabung merupakan pengamalan sila ke-...",
+            options: ["Ketiga (3)", "Keempat (4)", "Kelima (5)"],
+            answer: 2 // Sila kelima (5) - Keadilan sosial, hidup hemat/menabung
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let isAnswered = false;
+
+    // DOM Elements
+    const screens = {
+        start: document.getElementById('start-screen'),
+        quiz: document.getElementById('quiz-screen'),
+        result: document.getElementById('result-screen')
+    };
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const qImage = document.getElementById('q-image');
+    const qText = document.getElementById('q-text');
+    const optionsContainer = document.getElementById('options');
+    const nextBtnContainer = document.getElementById('next-btn-container');
+    const feedbackToast = document.getElementById('feedback-toast');
+    const feedbackIcon = document.getElementById('feedback-icon');
+    const feedbackText = document.getElementById('feedback-text');
+
+    function switchScreen(screenKey) {
+        Object.values(screens).forEach(screen => screen.classList.remove('active'));
+        screens[screenKey].classList.add('active');
+    }
+
+    function startQuiz() {
+        switchScreen('quiz');
+        progressContainer.style.display = 'block';
+        currentQuestionIndex = 0;
+        score = 0;
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        isAnswered = false;
+        nextBtnContainer.style.display = 'none';
+        
+        const data = quizData[currentQuestionIndex];
+        
+        // Atur Gambar dan Warna
+        qImage.textContent = data.image;
+        qImage.style.backgroundColor = data.bgColor;
+        qImage.style.borderColor = data.borderColor;
+        
+        // Atur Teks Pertanyaan
+        qText.innerHTML = `<span style="color: var(--primary)">Soal ${currentQuestionIndex + 1}:</span><br>${data.question}`;
+        
+        // Atur Pilihan
+        optionsContainer.innerHTML = '';
+        data.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            charPrefix = String.fromCharCode(65 + index); // A, B, C
+            btn.innerHTML = `<strong style="margin-right:8px; color:var(--primary)">${charPrefix}.</strong> ${opt}`;
+            btn.onclick = () => checkAnswer(index, btn);
+            optionsContainer.appendChild(btn);
+        });
+
+        updateProgress();
+    }
+
+    function checkAnswer(selectedIndex, btnElement) {
+        if (isAnswered) return;
+        isAnswered = true;
+
+        const data = quizData[currentQuestionIndex];
+        const isCorrect = selectedIndex === data.answer;
+        const allButtons = document.querySelectorAll('.option-btn');
+        
+        // Disable semua tombol
+        allButtons.forEach(btn => btn.disabled = true);
+
+        if (isCorrect) {
+            btnElement.classList.add('correct');
+            score += 20; // 5 soal x 20 = 100
+            showFeedback(true);
+        } else {
+            btnElement.classList.add('wrong');
+            // Tandai jawaban yang benar
+            allButtons[data.answer].classList.add('correct');
+            showFeedback(false);
+        }
+
+        setTimeout(() => {
+            nextBtnContainer.style.display = 'block';
+        }, 1000);
+    }
+
+    function showFeedback(isCorrect) {
+        if (isCorrect) {
+            feedbackIcon.textContent = '🌟';
+            feedbackText.textContent = 'Hebat, Jawabanmu Benar!';
+            feedbackText.style.color = 'var(--correct)';
+        } else {
+            feedbackIcon.textContent = '💡';
+            feedbackText.textContent = 'Kurang Tepat, Yuk Coba Lagi!';
+            feedbackText.style.color = 'var(--wrong)';
+        }
+        
+        feedbackToast.classList.add('show');
+        
+        // Sembunyikan setelah 1.5 detik
+        setTimeout(() => {
+            feedbackToast.classList.remove('show');
+        }, 1500);
+    }
+
+    function updateProgress() {
+        const percent = (currentQuestionIndex / quizData.length) * 100;
+        progressBar.style.width = percent + '%';
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function finishQuiz() {
+        progressBar.style.width = '100%';
+        setTimeout(() => {
+            progressContainer.style.display = 'none';
+            switchScreen('result');
+            animateScore();
+        }, 400);
+    }
+
+    function animateScore() {
+        const scoreElement = document.getElementById('final-score');
+        const messageElement = document.getElementById('result-message');
+        const emojiElement = document.getElementById('result-emoji');
+        let current = 0;
+        
+        const countInterval = setInterval(() => {
+            if (current >= score) {
+                clearInterval(countInterval);
+                scoreElement.textContent = score;
+                
+                // Set the message based on score
+                if (score === 100) {
+                    emojiElement.textContent = '🥇';
+                    messageElement.textContent = 'Luar Biasa! Kamu sangat memahami nilai-nilai Pancasila!';
+                    messageElement.style.color = 'var(--correct)';
+                } else if (score >= 60) {
+                    emojiElement.textContent = '👍';
+                    messageElement.textContent = 'Bagus sekali! Tetap semangat belajar Pancasila ya!';
+                    messageElement.style.color = 'var(--secondary)';
+                } else {
+                    emojiElement.textContent = '📚';
+                    messageElement.textContent = 'Ayo belajar lebih rajin lagi tentang Pancasila!';
+                    messageElement.style.color = 'var(--wrong)';
+                }
+            } else {
+                current += 2; // Increments of 2 for smooth animation
+                scoreElement.textContent = current;
+            }
+        }, 20);
+    }
+</script>
+</body>
+</html>
